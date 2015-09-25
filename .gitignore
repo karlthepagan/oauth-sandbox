@@ -12,6 +12,9 @@
 hs_err_pid*
 
 /.idea/*.xml
+/.idea/.*
+/.idea/copyright/
+
 /out/
 
 secret*

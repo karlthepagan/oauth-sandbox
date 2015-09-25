@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="joda-time:joda-time:2.8.2" type="repository">
+    <properties maven-id="joda-time:joda-time:2.8.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.8.2/joda-time-2.8.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ideaLibSources/joda-time-2.8.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
