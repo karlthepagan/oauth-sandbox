@@ -1,9 +1,6 @@
 package karl.codes;
 
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
+import org.joda.time.format.*;
 
 /**
  * Created by karl on 9/19/15.
@@ -35,4 +32,7 @@ public interface Joda {
             .appendLiteral('-')
             .appendDayOfMonth(2)
             .toFormatter();
+
+    DateTimeFormatter trelloFormat = ISODateTimeFormat.dateTime();
+
 }

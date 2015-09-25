@@ -1,12 +1,7 @@
 import com.fasterxml.jackson.core.type.TypeReference
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.RESTClient
-import org.joda.time.DateTime
-import org.joda.time.DateTimeConstants
-import org.joda.time.Duration
-import org.joda.time.Interval
-import org.joda.time.LocalDate
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.*
 import trello.Action
 
 import java.util.concurrent.TimeUnit
@@ -23,28 +18,28 @@ def secret = properties('secret.properties')
 RESTClient trello = new RESTClient(baseURI)
 trello.auth.oauth(*signer(secret.trello));
 
-DateTime since = DateTime.now()
+String since = DateTime.now()
         .withDayOfWeek(DateTimeConstants.MONDAY)
         .withTimeAtStartOfDay()
         .with { it.isAfter( DateTime.now() ) ? it.minusWeeks(1) : it }
+        .withZone(DateTimeZone.UTC) // local start of last Monday, in UTC
+        .with trelloFormat.&print
 
 List<Action> actions = trello.get(
         path: "boards/${secret.board}/actions",
         query: [
                 filter: 'updateCard:idList',
                 limit: 1000,
-                since: ISODateTimeFormat.dateTime().print(since)
+                since: since
                 ])
 { HttpResponseDecorator resp ->
     return json.readValue(resp.entity.content, new TypeReference<List<Action>>() {})
 }
 
-//List<Action> actions = json.readValue(new File('../board.json'),new TypeReference<Board>() {}).actions;
-
-println actions.size()
-
+// map events into timelines for each card
+// join move events to create date ranges
 def timelines = actions
-        .findAll {it.type == updateCard && it.data.listAfter}
+        .findAll {it.type == updateCard && it.data.listAfter} // repeat of query filter updateCard:idList
         .reverse().inject([:].withDefault{[]}) { result, event ->
             def events = result[event.data.card.name]
 
@@ -57,7 +52,7 @@ def timelines = actions
 
             result}
 
-// endcap all open events
+// endcap all open date ranges
 timelines.each { project, events ->
     events[-1].date = new Interval(events[-1].date,DateTime.now())
 }
@@ -69,7 +64,7 @@ def totals = timelines.collect() { project, it ->
         if (event.date instanceof Interval) {
             Duration duration = event.date.toDuration()
             print durationFormat.print(duration.toPeriod())
-            if (event.name == 'Working') {
+            if (event.name == secret.listName) {
                 LocalDate day = event.date.start.toLocalDate()
                 totals[day] += duration
                 totals.week += duration

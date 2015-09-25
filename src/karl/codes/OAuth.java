@@ -17,7 +17,7 @@ public class OAuth {
                 properties.get("secretToken"));
     }
 
-    public static final String[] pairs(Map<String,String> properties) {
+    public static final List<String> pairs(Map<String,String> properties) {
         ArrayList<String> out = new ArrayList<>(properties.size() * 2);
 
         for(Map.Entry<String,String> e : properties.entrySet()) {
@@ -25,6 +25,6 @@ public class OAuth {
             out.add(e.getValue());
         }
 
-        return out.toArray(new String[0]);
+        return out;
     }
 }
