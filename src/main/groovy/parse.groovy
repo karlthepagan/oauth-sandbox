@@ -9,14 +9,24 @@ import java.util.concurrent.TimeUnit
 import static karl.codes.Groovy.*
 import static karl.codes.Jackson.*
 import static karl.codes.Joda.*
-import static karl.codes.OAuth.*
-import static trello.Action.Type.*
+import static karl.codes.Java.*
 import static trello.Trello.*;
 
-def secret = properties('secret.properties')
+def secret = properties('secret.properties',[
+        trello: [
+                accessToken: 'authentication is required',
+                secretToken: 'authentication is required'
+        ],
+        board: 'the board id to parse',
+        listName: 'Working',
+        listGravity: 'Lunch',
+])
 
 RESTClient trello = new RESTClient(baseURI)
 trello.auth.oauth(*signer(secret.trello));
+trello.ignoreSSLIssues()
+
+DateTimeZone localZone = DateTimeZone.getDefault()
 
 String since = DateTime.now()
         .withDayOfWeek(DateTimeConstants.MONDAY)
@@ -39,22 +49,50 @@ List<Action> actions = trello.get(
 // map events into timelines for each card
 // join move events to create date ranges
 def timelines = actions
-        .findAll {it.type == updateCard && it.data.listAfter} // repeat of query filter updateCard:idList
+        .findAll {it.type == 'updateCard' && it.data.listAfter} // repeat of query filter updateCard:idList
         .reverse().inject([:].withDefault{[]}) { result, event ->
             def events = result[event.data.card.name]
 
             if(events.size) {
                 assert events[-1].name == event.data.listBefore.name
-                events[-1].date = new Interval(events[-1].date,event.date)
+                events[-1].date = new Interval(events[-1].date,event.date.withZone(localZone))
             }
 
-            events << [name: event.data.listAfter.name, date: event.date]
+            events << [name: event.data.listAfter.name, date: event.date.withZone(localZone)]
 
             result}
 
+def eventBeforeGravity, gravity, eventAfterGravity
+LocalDate lastDay
+
 // endcap all open date ranges
-timelines.each { project, events ->
+timelines.each { project, List events ->
     events[-1].date = new Interval(events[-1].date,DateTime.now())
+
+    int[] f = events.inject([:]) { days, event ->
+        LocalDate day = event.date.start.toLocalDate()
+
+    }
+
+    // collapse breaks before & after gravity into gravity
+    events.each {
+
+        if(it.name == secret.listName) {
+            // target list, immutable day start & end
+            if(!lastDay || lastDay.isBefore(day)) {
+                lastDay = day
+                eventBeforeGravity = gravity = eventAfterGravity = null
+            }
+
+            if(!eventBeforeGravity) {
+                eventBeforeGravity = event
+            }
+
+
+        } else {
+//            if(!gravity || event.name == )
+        }
+    }
 }
 
 def totals = timelines.collect() { project, it ->
