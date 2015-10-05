@@ -35,6 +35,7 @@ String since = DateTime.now()
         .withZone(DateTimeZone.UTC) // local start of last Monday, in UTC
         .with trelloFormat.&print
 
+println 'requesting...'
 List<Action> actions = trello.get(
         path: "boards/${secret.board}/actions",
         query: [
@@ -69,15 +70,15 @@ LocalDate lastDay
 timelines.each { project, List events ->
     events[-1].date = new Interval(events[-1].date,DateTime.now())
 
-    int[] f = events.inject([:]) { days, event ->
-        LocalDate day = event.date.start.toLocalDate()
-
-    }
+//    int[] f = events.inject([:]) { days, event ->
+//
+//    }
 
     // collapse breaks before & after gravity into gravity
-    events.each {
+    events.each { event ->
+        LocalDate day = event.date.start.toLocalDate()
 
-        if(it.name == secret.listName) {
+        if(event.name == secret.listName) {
             // target list, immutable day start & end
             if(!lastDay || lastDay.isBefore(day)) {
                 lastDay = day

@@ -13,8 +13,8 @@ ignoreSSLIssues()
 
 def secret = properties('secret.properties',[
         trello: [
-                consumerKey: 'trello API key',
-                consumerSecret: 'trello API secret',
+                consumerKey: 'trello API key here: https://trello.com/app-key',
+                consumerSecret: 'trello API secret here: https://trello.com/app-key',
                 appName: 'make up an app name',
                 scope: 'read,write,account',
         ],
