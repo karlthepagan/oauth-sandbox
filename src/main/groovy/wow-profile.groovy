@@ -8,11 +8,11 @@ def secret = properties('secret.properties',[
         bnet: [
                 accessToken: 'authentication is required',
         ],
-])
+]).bnet
 
 RESTClient bnet = new RESTClient(BattleNet.baseURI)
 bnet.headers = [
-        Authorization: "Bearer ${secret.bnet.accessToken}"
+        Authorization: "Bearer ${secret.accessToken}"
 ]
 
 String body = bnet.get(

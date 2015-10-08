@@ -15,15 +15,15 @@ import static trello.Trello.*;
 def secret = properties('secret.properties',[
         trello: [
                 accessToken: 'authentication is required',
-                secretToken: 'authentication is required'
+                secretToken: 'authentication is required',
+                board: 'the board id to parse',
+                listName: 'Working',
+                listGravity: 'Lunch',
         ],
-        board: 'the board id to parse',
-        listName: 'Working',
-        listGravity: 'Lunch',
-])
+]).trello
 
 RESTClient trello = new RESTClient(baseURI)
-trello.auth.oauth(*signer(secret.trello));
+trello.auth.oauth(*signer(secret));
 trello.ignoreSSLIssues()
 
 DateTimeZone localZone = DateTimeZone.getDefault()

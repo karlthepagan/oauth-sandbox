@@ -41,7 +41,7 @@ class Groovy {
             String printKey = baseName ? "$baseName.$key" : key
             if(value instanceof Map && config[key] instanceof ConfigObject)
                 require(errors,printKey,config[key] as ConfigObject,value as Map)
-            else if(!config[key] || config[key] instanceof ConfigObject)
+            else if(!(config[key] || config[key] == '') || config[key] instanceof ConfigObject)
                 errors << "$printKey=$value"
         }
     }
