@@ -10,8 +10,8 @@ import static karl.codes.Groovy.*
 
 def secret = properties('secret.properties',[
         twitch: [
-                consumerKey: 'twitch API key from http://www.twitch.tv/kraken/oauth2/clients',
-                consumerSecret: 'twitch API secret from http://www.twitch.tv/kraken/oauth2/clients',
+                consumerKey: 'twitch API key from http://www.twitch.tv/kraken/oauth2/clients/new',
+                consumerSecret: 'twitch API secret from http://www.twitch.tv/kraken/oauth2/clients/new',
                 appName: 'make up an app name',
                 redirect: 'specify your redirect (must match!)',
                 scope: ['user_blocks_edit',
@@ -57,5 +57,25 @@ OAuthClient oauth2 = new OAuthClient(new URLConnectionClient())
 
 OAuthJSONAccessTokenResponse token = oauth2.accessToken(tokenRequest)
 
+
+
+
+// auth for IRC connection
+authzRequest = OAuthClientRequest
+        .authorizationLocation(Twitch.oauthMethods[2])
+        .setClientId(secret.consumerKey)
+        .setScope('chat_login')
+        .setState('ABCDE')
+        .setRedirectURI(secret.redirect)
+        .setResponseType(ResponseType.TOKEN.toString()) // token in url fragment (implicit token grant)
+        .buildQueryMessage()
+
+println authzRequest.getLocationUri()
+
+println 'get access_token from url fragment!'
+print 'access_token>> '
+String chatToken = scanner.nextLine()
+
 println "twitch.accessToken=${token.accessToken}"
-// application/vnd.twitchtv[.version]+json
+// don't forget application/vnd.twitchtv[.version]+json
+println "twitch.chatToken=oauth:${chatToken}"
