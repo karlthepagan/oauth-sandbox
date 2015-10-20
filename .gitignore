@@ -19,3 +19,7 @@ hs_err_pid*
 /build/
 
 secret*
+
+/lib/*/
+/lib/*.jar
+/lib/*.pom

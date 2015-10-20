@@ -2,7 +2,22 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 sourceCompatibility=1.8
 
+repositories {
+    jcenter()
+//    mavenCentral artifactUrls: ['file://./lib/']
+    flatDir {
+        dir 'lib'
+    }
+// TODO authlib not in /lib
+//    maven {
+//        name = 'forge' //
+//        url = 'http://files.minecraftforge.net/maven'
+//    }
+}
+
+
 dependencies {
+    compile 'com.mojang:authlib:1.5.21'
     compile 'org.codehaus.groovy:groovy-all:2.4.5'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
     compile 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.6.1'
@@ -10,4 +25,14 @@ dependencies {
     compile 'oauth.signpost:signpost-commonshttp4:1.2.1.2'
     compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
     compile 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1'
+
+    // transitive dependencies from com.mojang:authlib
+    compile 'com.google.guava:guava:18.0'
+    compile 'org.apache.commons:commons-lang3:3.3.2'
+    compile 'org.apache.logging.log4j:log4j-core:2.0-beta9'
+    compile 'commons-codec:commons-codec:1.9'
+    compile 'org.apache.logging.log4j:log4j-api:2.0-beta9'
+    compile 'com.google.code.gson:gson:2.2.4'
+    compile 'com.google.code.findbugs:jsr305:2.0.1'
+    compile 'commons-io:commons-io:2.4'
 }
