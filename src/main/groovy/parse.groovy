@@ -22,6 +22,8 @@ def secret = properties('secret.properties',[
         ],
 ]).trello
 
+boolean lastWeek = false;
+
 RESTClient trello = new RESTClient(baseURI)
 trello.auth.oauth(*signer(secret));
 trello.ignoreSSLIssues()
@@ -31,7 +33,7 @@ DateTimeZone localZone = DateTimeZone.getDefault()
 String since = DateTime.now()
         .withDayOfWeek(DateTimeConstants.MONDAY)
         .withTimeAtStartOfDay()
-        .with { it.isAfter( DateTime.now() ) ? it.minusWeeks(1) : it }
+        .with { (lastWeek || it.isAfter( DateTime.now() )) ? it.minusWeeks(1) : it }
         .withZone(DateTimeZone.UTC) // local start of last Monday, in UTC
         .with trelloFormat.&print
 
