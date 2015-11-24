@@ -49,70 +49,105 @@ List<Action> actions = trello.get(
     return json.readValue(resp.entity.content, new TypeReference<List<Action>>() {})
 }
 
+class ParseEvent {
+    String name
+    MutableInterval date
+}
+
 // map events into timelines for each card
 // join move events to create date ranges
-def timelines = actions
+Map<String,List<ParseEvent>> timelines = actions
         .findAll {it.type == 'updateCard' && it.data.listAfter} // repeat of query filter updateCard:idList
-        .reverse().inject([:].withDefault{[]}) { result, event ->
-            def events = result[event.data.card.name]
+        .reverse().inject([:].withDefault{[]}) { result, action ->
+            def events = result[action.data.card.name]
 
             if(events.size) {
-                assert events[-1].name == event.data.listBefore.name
-                events[-1].date = new Interval(events[-1].date,event.date.withZone(localZone))
+                assert events[-1].name == action.data.listBefore.name
+                events[-1].date.setEnd(action.date.withZone(localZone))
             }
 
-            events << [name: event.data.listAfter.name, date: event.date.withZone(localZone)]
+            events << ([name: action.data.listAfter.name,
+                       date: new MutableInterval(action.date.withZone(localZone),DateTime.now())] as ParseEvent)
 
             result}
 
-def eventBeforeGravity, gravity, eventAfterGravity
 LocalDate lastDay
 
-// endcap all open date ranges
-timelines.each { project, List events ->
-    events[-1].date = new Interval(events[-1].date,DateTime.now())
-
+timelines.each { project, events ->
 //    int[] f = events.inject([:]) { days, event ->
 //
 //    }
 
+    List<ParseEvent> gravityFluid = []
+
+    ParseEvent gravity
+
     // collapse breaks before & after gravity into gravity
-    events.each { event ->
+    events.addAll events.collectMany { ParseEvent event ->
         LocalDate day = event.date.start.toLocalDate()
 
         if(event.name == secret.listName) {
             // target list, immutable day start & end
-            if(!lastDay || lastDay.isBefore(day)) {
+            if (!lastDay || lastDay.isBefore(day)) {
                 lastDay = day
-                eventBeforeGravity = gravity = eventAfterGravity = null
+                // reset massless objects (breaks)
+                gravityFluid = []
+                // reset gravity object (start of day, end of lunch)
+                // this is our start anchor
+                gravity = event
+            } else {
+                // collapse towards gravity
+                long shift = event.date.toDurationMillis()
+                gravity.date.with {
+                    setDurationAfterStart(shift + toDurationMillis())
+                }
+                event.date.setDurationAfterStart(0)
+
+                // shift massless events
+                gravityFluid.each {
+                    long x = it.date.toDurationMillis()
+                    it.date.with {
+                        setStartMillis(getStartMillis() - shift)
+                        setDurationAfterStart(x)
+                    }
+                }
             }
-
-            if(!eventBeforeGravity) {
-                eventBeforeGravity = event
-            }
-
-
+        } else if(event.name == secret.listGravity) {
+            long time = event.date.endMillis
+            // target gravity, collapse mass to abut this event
+            gravity = [
+                    name: secret.listName,
+                    date: new MutableInterval(time, time)
+            ] as ParseEvent
+            gravityFluid = []
+            return [gravity]
         } else {
-//            if(!gravity || event.name == )
+            // collect events with mass
+            gravityFluid << event
         }
+        return []
     }
+
+    events.sort { it.date.startMillis }
 }
 
 def totals = timelines.collect() { project, it ->
     def timeline = it.inject([:].withDefault{ new Duration(0) }) { totals, event ->
-        print "$project: $event.name $event.date "
+        if(!event.date.toDurationMillis()) return totals
 
-        if (event.date instanceof Interval) {
-            Duration duration = event.date.toDuration()
-            print durationFormat.print(duration.toPeriod())
-            if (event.name == secret.listName) {
-                LocalDate day = event.date.start.toLocalDate()
-                totals[day] += duration
-                totals.week += duration
-            }
+        Duration duration = event.date.toDuration()
+
+        print "$project: "
+        print durationFormat.print(duration.toPeriod())
+        print "\n\t\t$event.name at "
+        println workTimeFormat.print(event.date.start)
+
+        if (event.name == secret.listName) {
+            LocalDate day = event.date.start.toLocalDate()
+            totals[day] += duration
+            totals.week += duration
         }
 
-        println()
         totals
     }
 

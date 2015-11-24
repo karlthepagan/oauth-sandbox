@@ -17,6 +17,16 @@ public interface Joda {
             .appendSuffix("s")
             .toFormatter();
 
+    DateTimeFormatter workTimeFormat = new DateTimeFormatterBuilder()
+            .appendDayOfWeekText()
+            .appendLiteral(' ')
+            .appendHourOfHalfday(1)
+            .appendLiteral(':')
+            .appendMinuteOfHour(2)
+            .appendLiteral(' ')
+            .appendHalfdayOfDayText()
+            .toFormatter();
+
     DateTimeFormatter timeFormat = new DateTimeFormatterBuilder()
             .appendHourOfDay(1)
             .appendLiteral(':')
