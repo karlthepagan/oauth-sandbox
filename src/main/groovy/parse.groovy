@@ -78,6 +78,7 @@ timelines.each { project, events ->
 //
 //    }
 
+//    return;
     List<ParseEvent> gravityFluid = []
 
     ParseEvent gravity
@@ -95,7 +96,7 @@ timelines.each { project, events ->
                 // reset gravity object (start of day, end of lunch)
                 // this is our start anchor
                 gravity = event
-            } else {
+            } else if(gravity != null) {
                 // collapse towards gravity
                 long shift = event.date.toDurationMillis()
                 gravity.date.with {
@@ -107,8 +108,7 @@ timelines.each { project, events ->
                 gravityFluid.each {
                     long x = it.date.toDurationMillis()
                     it.date.with {
-                        setStartMillis(getStartMillis() - shift)
-                        setDurationAfterStart(x)
+                        setInterval(getStartMillis() + shift, getStartMillis() + shift + x)
                     }
                 }
             }
