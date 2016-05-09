@@ -1,8 +1,14 @@
 import com.fasterxml.jackson.core.type.TypeReference
 import groovyx.net.http.HttpResponseDecorator
+import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
+import oauth.signpost.OAuth
+import oauth.signpost.basic.DefaultOAuthConsumer
+import oauth.signpost.basic.DefaultOAuthProvider
+import oauth.signpost.http.HttpResponse
 import org.joda.time.*
 import trello.Action
+import trello.Trello
 
 import java.util.concurrent.TimeUnit
 
@@ -14,6 +20,14 @@ import static trello.Trello.*;
 
 def secret = properties('secret.properties',[
         trello: [
+                consumerKey: 'trello API key here: https://trello.com/app-key',
+                consumerSecret: 'trello API secret here: https://trello.com/app-key',
+                appName: 'make up an app name',
+                scope: [
+                        'read',
+                        'write',
+                        'account',
+                ].join(','),
                 accessToken: 'authentication is required',
                 secretToken: 'authentication is required',
                 board: 'the board id to parse',
@@ -22,7 +36,7 @@ def secret = properties('secret.properties',[
         ],
 ]).trello
 
-boolean lastWeek = false;
+boolean lastWeek = true;
 
 RESTClient trello = new RESTClient(baseURI)
 trello.auth.oauth(*signer(secret));
@@ -38,15 +52,36 @@ String since = DateTime.now()
         .with trelloFormat.&print
 
 println 'requesting...'
-List<Action> actions = trello.get(
-        path: "boards/${secret.board}/actions",
-        query: [
-                filter: 'updateCard:idList',
-                limit: 1000,
-                since: since
-                ])
-{ HttpResponseDecorator resp ->
-    return json.readValue(resp.entity.content, new TypeReference<List<Action>>() {})
+List<Action> actions
+try {
+    actions = trello.get(
+            path: "boards/${secret.board}/actions",
+            query: [
+                    filter: 'updateCard:idList',
+                    limit : 1000,
+                    since : since
+            ])
+            { HttpResponseDecorator resp ->
+                return json.readValue(resp.entity.content, new TypeReference<List<Action>>() {})
+            }
+} catch (HttpResponseException e) {
+    if(e.statusCode == 401) {
+        ignoreSSLIssues()
+
+        Scanner scanner = new Scanner(System.in)
+
+        DefaultOAuthConsumer consumer = new DefaultOAuthConsumer(*signer(secret)[0..1])
+        DefaultOAuthProvider provider = new DefaultOAuthProvider(*Trello.oauthMethods)
+        provider.retrieveRequestToken(consumer, OAuth.OUT_OF_BAND)
+        println "${Trello.oauthMethods[2]}?oauth_token=${consumer.token}&callback_url=oob&name=${secret.appName}&scope=${secret.scope}"
+        println 'that looks like an error, but just copy the value in the url'
+        print 'oauth_verifier>> '
+        provider.retrieveAccessToken(consumer, scanner.nextLine())
+
+        println "trello.accessToken=${consumer.token}"
+        println "trello.secretToken=${consumer.tokenSecret}"
+    }
+    return
 }
 
 class ParseEvent {
