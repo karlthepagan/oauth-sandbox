@@ -29,6 +29,7 @@ dependencies {
     compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
     compile 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1'
     compile 'org.kitteh.irc:client-lib:0.3.5'
+    compile 'io.netty:netty-all:4.1.4.Final'
 
     // transitive dependencies from com.mojang:authlib
     compile 'com.google.guava:guava:18.0'

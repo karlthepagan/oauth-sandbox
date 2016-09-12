@@ -44,3 +44,5 @@ Client client = Client.builder()
         .build();
 client.getEventManager().registerEventListener(new Listener());
 client.addChannel('#karlthepagan');
+
+Thread.sleep(1000);
